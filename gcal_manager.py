@@ -1,81 +1,81 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Sep 14 14:45:50 2026
-
-@author: enlishhoang
+gcal_manager.py
+Quản lý kết nối Google Calendar API (OAuth2) và logic đồng bộ sự kiện.
 """
 
-import os.path
 import datetime
+import logging
+import os.path
+
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-# Quyền truy cập: Cho phép đọc và ghi vào Lịch
-SCOPES = ['https://www.googleapis.com/auth/calendar']
-TIMEZONE = 'Asia/Ho_Chi_Minh'
+SCOPES = ["https://www.googleapis.com/auth/calendar"]
+TIMEZONE = "Asia/Ho_Chi_Minh"
+SYNC_TAG = "[Auto-Synced-ERP]"
+
+log = logging.getLogger("usth-sync.gcal")
+
 
 def get_calendar_service():
     creds = None
-    # Token.json lưu trữ thông tin xác thực sau lần đăng nhập đầu tiên
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-    
-    # Nếu chưa có token hoặc token hết hạn, mở trình duyệt để xác thực lại
+    if os.path.exists("token.json"):
+        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            # File này bạn vừa tải từ Google Cloud
-            flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
             creds = flow.run_local_server(port=0)
-        # Lưu lại để lần sau chạy ngầm không cần trình duyệt
-        with open('token.json', 'w') as token:
+        with open("token.json", "w") as token:
             token.write(creds.to_json())
 
-    return build('calendar', 'v3', credentials=creds)
+    return build("calendar", "v3", credentials=creds)
 
-def sync_to_google_calendar(schedule_data):
+
+def sync_to_google_calendar(schedule_data: list[dict],calendar_id: str = 'primary') -> None:
     service = get_calendar_service()
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    now_iso = now.isoformat().replace("+00:00", "Z")
+    now_timestamp = now.timestamp()
+
+    log.info("Đang dọn dẹp lịch cũ do tool tạo (từ thời điểm hiện tại trở đi)...")
     
-    # Lấy mốc thời gian hiện tại
-    now_utc_str = datetime.datetime.utcnow().isoformat() + 'Z' 
-    now_timestamp = datetime.datetime.now().timestamp()
-    
-    print("Đang dọn dẹp lịch cũ do tool tạo (từ thời điểm hiện tại)...")
     events_result = service.events().list(
-        calendarId='primary', timeMin=now_utc_str, 
-        q='[Auto-Synced-ERP]', 
-        singleEvents=True).execute()
-    events = events_result.get('items', [])
+        calendarId= calendar_id,
+        timeMin=now_iso,
+        q=SYNC_TAG,
+        singleEvents=True,
+    ).execute()
 
-    for event in events:
-        service.events().delete(calendarId='primary', eventId=event['id']).execute()
-        print(f"Đã xóa lịch cũ: {event.get('summary')}")
+    for event in events_result.get("items", []):
+        service.events().delete(calendarId=calendar_id, eventId=event["id"]).execute()
+        log.info("Đã xóa lịch cũ: %s", event.get("summary"))
 
-    print("Đang lọc và đẩy lịch tương lai lên...")
+    log.info("Đang lọc và đẩy lịch tương lai lên...")
+    added, skipped = 0, 0
     for item in schedule_data:
-        # Chuyển chuỗi thời gian của môn học thành timestamp Unix để đối chiếu
-        event_time = datetime.datetime.fromisoformat(item['start_time'])
-        
-        # Chỉ đẩy dữ liệu lên API nếu thời gian bắt đầu lớn hơn hiện tại
-        if event_time.timestamp() > now_timestamp:
-            event = {
-              'summary': item['subject'],
-              'location': item['room'],
-              'description': '[Auto-Synced-ERP] Lịch học được tự động đồng bộ từ ERP.',
-              'start': {
-                'dateTime': item['start_time'],
-                'timeZone': TIMEZONE,
-              },
-              'end': {
-                'dateTime': item['end_time'],
-                'timeZone': TIMEZONE,
-              },
-            }
-            service.events().insert(calendarId='primary', body=event).execute()
-            print(f"Đã thêm mới: {item['subject']}")
-        else:
-            print(f"Bỏ qua lịch quá khứ: {item['subject']}")
+        event_time = datetime.datetime.fromisoformat(item["start_time"])
+
+        if event_time.timestamp() <= now_timestamp:
+            skipped += 1
+            continue
+
+        event = {
+            "summary": item["subject"],
+            "location": item["room"],
+            "description": f"{SYNC_TAG} Lịch học được tự động đồng bộ từ ERP.",
+            "start": {"dateTime": item["start_time"], "timeZone": TIMEZONE},
+            "end": {"dateTime": item["end_time"], "timeZone": TIMEZONE},
+        }
+        service.events().insert(calendarId=calendar_id, body=event).execute()
+        added += 1
+        log.info("Đã thêm mới: %s", item["subject"])
+
+    log.info("Hoàn tất: thêm %d sự kiện, bỏ qua %d sự kiện quá khứ.", added, skipped)
