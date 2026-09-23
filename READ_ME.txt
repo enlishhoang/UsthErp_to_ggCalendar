@@ -15,8 +15,7 @@ YÊU CẦU:
 CÁC BƯỚC THỰC HIỆN:
     1. Tạo project Google Cloud như ảnh API_ggCloud (dùng mail trường, vào được trang chủ thì vào console chứ ko phải start for free), sau đó lưu file credentials.json vào cùng thư mục tool này
     2. Copy đoạn code sau vào terminal VSC để tải thư viện python:
-        python3 -m venv venv
-        source venv/bin/activate
+        
         pip install playwright beautifulsoup4 nest-asyncio google-api-python-client google-auth-httplib2 google-auth-oauthlib
         playwright install chromium
     3. Chạy file login_once.py để lấy dữ liệu phiên đăng nhập erp cho 2 file còn lại. Sau khi đăng nhập hãy vào thời khóa biểu -> lịch tuần, cửa sổ sẽ tự đóng sau đó
