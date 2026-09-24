@@ -8,7 +8,7 @@ Cào thời khóa biểu (có thể gồm cả tuần cũ) rồi đẩy lên Goo
 Cách dùng tạm thời:
     Bấm nút run trong VSC:                       Mặc định sync tuần này và tuần sau
     python sync_auto.py                          Trong terminal hoặc command promt
-    python sync_auto.py --past-weeks 3 --weeks 2 # 3 tuần trước + tuần này và 1 tuần sau,  nên dùng cho lần đầu chạy
+    python sync_auto.py --past-weeks 3 --future-weeks 2 # 3 tuần trước + tuần này và 1 tuần sau,  nên dùng cho lần đầu chạy
 """
 
 import argparse
