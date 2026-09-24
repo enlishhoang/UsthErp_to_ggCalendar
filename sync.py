@@ -5,7 +5,7 @@ sync.py  (phương án cào HTML — dùng khi cần lịch thi chính xác)
 Cào thời khóa biểu (có thể gồm cả tuần cũ) rồi đẩy lên Google Calendar.
 
 Cách dùng:
-    python sync.py                              # sẽ hỏi số tuần cũ / tuần tới / calendar
+    Bấm nút run trong VSC                       # sẽ hỏi số tuần cũ / tuần tới / calendar
     python sync.py --past-weeks 3 --weeks 2     # 3 tuần trước + tuần này và 1 tuần sau vào lịch cá nhân mặc định    #khuyên dùng lần đầu
     python sync.py --past-weeks 3 --weeks 2 --calendar <id lịch bạn muốn nhập vào ex: abc@group.calendar.google.com>>
 
