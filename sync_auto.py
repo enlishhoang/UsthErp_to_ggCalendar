@@ -8,7 +8,7 @@ Cào thời khóa biểu (có thể gồm cả tuần cũ) rồi đẩy lên Goo
 Cách dùng tạm thời:
     Bấm nút run trong VSC:                       Mặc định sync tuần này và tuần sau
     python sync_auto.py                          Trong terminal hoặc command promt
-    python sync_auto.py --past-weeks 3 --future-weeks 2 # 3 tuần trước + tuần này và 1 tuần sau,  nên dùng cho lần đầu chạy
+    python sync_auto.py --past-weeks 3 --future-weeks 2 # 3 tuần trước + tuần này và 2 tuần sau,  nên dùng cho lần đầu chạy
 """
 
 import argparse
@@ -65,7 +65,7 @@ async def main(past_weeks: int, future_weeks: int, headless: bool, calendar_id: 
 if __name__ == "__main__": 
     parser = argparse.ArgumentParser(description="Đồng bộ TKB USTH sang Google Calendar bằng API AES")
     parser.add_argument("--past-weeks", type=int, default=0, help="Số tuần QUÁ KHỨ muốn quét (để lấy lịch cũ)")
-    parser.add_argument("--future-weeks", type=int, default=2, help="Số tuần TƯƠNG LAI cần đồng bộ")
+    parser.add_argument("--future-weeks", type=int, default=1, help="Số tuần TƯƠNG LAI cần đồng bộ")
     parser.add_argument("--calendar", type=str, default="primary", help="ID Calendar (mặc định: primary)")
     parser.add_argument("--show-browser", action="store_true", help="Hiện cửa sổ Chrome (debug)")
     
