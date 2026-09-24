@@ -27,10 +27,11 @@ class SessionExpiredError(Exception):
 
 
 async def fetch_weeks_html(weeks: int = 1, headless: bool = True,
-                            profile_dir: str = PROFILE_DIR) -> list[str]:
+                            profile_dir: str = PROFILE_DIR, past_weeks: int = 0) -> list[str]:
     """
-    Mở lại profile Chrome đã đăng nhập từ login_once.py, cào HTML của
-    `weeks` tuần liên tiếp bằng cách bấm nút "Next" giữa mỗi tuần.
+    Mở lại profile Chrome đã đăng nhập từ login_once.py, bấm nút "Prev" `past_weeks`
+    lần để lùi về tuần cũ, rồi cào HTML của `past_weeks + weeks` tuần liên tiếp
+    (past_weeks tuần cũ + tuần này + các tuần sau) bằng cách bấm nút "Next".
     Trả về danh sách chuỗi HTML, mỗi phần tử là 1 tuần.
     Raise SessionExpiredError nếu không vào được lưới lịch tuần ngay từ đầu.
     """
@@ -51,8 +52,15 @@ async def fetch_weeks_html(weeks: int = 1, headless: bool = True,
                 f"(URL hiện tại: {page.url}). Session có thể đã hết hạn."
             )
 
-        for i in range(weeks):
-            print(f"--- Đang xử lý tuần {i + 1}/{weeks} ---")
+        # Lùi về đầu khoảng cần cào
+        for j in range(past_weeks):
+            print(f"Lùi về tuần trước ({j + 1}/{past_weeks})...")
+            await page.locator('span[aria-label="left"]').first.click(force=True)
+            await page.wait_for_timeout(1500)
+
+        total = past_weeks + weeks
+        for i in range(total):
+            print(f"--- Đang xử lý tuần {i + 1}/{total} ---")
             try:
                 if i > 0:
                     await page.wait_for_selector(".day-header", timeout=15000)
@@ -60,7 +68,7 @@ async def fetch_weeks_html(weeks: int = 1, headless: bool = True,
 
                 htmls.append(await page.content())
 
-                if i < weeks - 1:
+                if i < total - 1:
                     await page.locator('span[aria-label="right"]').click(force=True)
                     await page.wait_for_timeout(2000)
             except Exception as e:
@@ -123,9 +131,9 @@ def parse_weekly_html(html_content: str) -> list[dict]:
     return parsed_events
 
 
-async def get_schedule(weeks: int = 1, headless: bool = True) -> list[dict]:
-    """Tiện ích gộp: cào N tuần rồi bóc tách luôn thành 1 danh sách sự kiện phẳng."""
-    htmls = await fetch_weeks_html(weeks=weeks, headless=headless)
+async def get_schedule(weeks: int = 1, headless: bool = True, past_weeks: int = 0) -> list[dict]:
+    """Tiện ích gộp: cào (past_weeks + weeks) tuần rồi bóc tách thành 1 danh sách sự kiện phẳng."""
+    htmls = await fetch_weeks_html(weeks=weeks, headless=headless, past_weeks=past_weeks)
     schedule = []
     for html in htmls:
         schedule.extend(parse_weekly_html(html))
