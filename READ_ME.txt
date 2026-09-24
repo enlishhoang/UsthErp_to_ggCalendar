@@ -24,6 +24,8 @@ MÔ TẢ:
 YÊU CẦU:
     1. Đăng kí API gg calendar trên Google Cloud Console và file credentials.json sau khi đăng kí xong
     2. Trình biên soạn python như VSC hoặc Spyder
+    3. Cài đặt python và pip
+    4. Thêm path vào environment
 
 
 CÁC BƯỚC THỰC HIỆN CÀI ĐẶT:
@@ -32,8 +34,9 @@ CÁC BƯỚC THỰC HIỆN CÀI ĐẶT:
         Nếu máy chạy linux/mac thì thêm đoạn sau, window thì bỏ qua:
                 python3 -m venv .venv
                 source .venv/bin/activate
-        
-        pip install playwright beautifulsoup4 nest-asyncio google-api-python-client google-auth-httplib2 google-auth-oauthlib
+        Window:
+        py -m ensurepip --upgrade
+        py -m pip install playwright beautifulsoup4 nest-asyncio google-api-python-client google-auth-httplib2 google-auth-oauthlib pycryptodome
         playwright install chromium
 
     3. Chạy file login_once.py để lấy dữ liệu phiên đăng nhập erp cho 2 file còn lại. Sau khi đăng nhập hãy vào thời khóa biểu -> lịch tuần, cửa sổ sẽ tự đóng sau đó
