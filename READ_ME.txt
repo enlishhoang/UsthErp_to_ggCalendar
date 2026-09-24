@@ -35,17 +35,19 @@ CÁC BƯỚC THỰC HIỆN CÀI ĐẶT:
     4. Phím window -> search Edit system environment variables -> Environment variables 
         Ở user variables tìm dòng Path -> edit -> new. Paste đường dẫn vào python: C:\Users\TIEN ANH\AppData\Local\Programs\Python\
         Vào terminal VSC chạy lệnh   pip --version   để check thử
-    Copy đoạn code sau vào terminal VSC để tải thư viện python:
-        Nếu máy chạy linux/mac thì thêm đoạn sau, window thì bỏ qua:
-                python3 -m venv .venv
-                source .venv/bin/activate
-        Window:
+    5. Copy đoạn code sau vào terminal VSC để tải thư viện python:
+                Nếu máy chạy linux/mac thì thêm đoạn sau, window thì bỏ qua:
+        python3 -m venv .venv
+        source .venv/bin/activate
+                Mọi hệ điều hành:
         pip install playwright beautifulsoup4 nest-asyncio google-api-python-client google-auth-httplib2 google-auth-oauthlib pycryptodome
         playwright install chromium
 
-    3. Chạy file login_once.py để lấy dữ liệu phiên đăng nhập erp cho 2 file còn lại. Sau khi đăng nhập hãy vào thời khóa biểu -> lịch tuần, cửa sổ sẽ tự đóng sau đó
-    4. Lần đầu chạy file sync.py để chọn số tuần muốn đồng bộ và lịch muốn đồng bộ
-    5. Cài đặt cho file sync_auto.py chạy tự động hằng ngày: sẽ cập nhật ở phiên bản sau
+    6. Chạy file login_once.py để lấy dữ liệu phiên đăng nhập erp cho 2 file còn lại. Sau khi đăng nhập hãy vào thời khóa biểu -> lịch tuần, cửa sổ sẽ tự đóng sau đó
+    7. Lần đầu chạy file sync.py để chọn số tuần muốn đồng bộ và lịch muốn đồng bộ
+       Cài đặt cho file sync_auto.py chạy tự động hằng ngày: sẽ cập nhật ở phiên bản sau
+    8. Từ sau mỗi lần muốn đồng bộ lại chỉ cần chạy lại file sync_auto để cập nhật 2 tuần
+       Cài đặt chi tiết hơn có thể đọc hướng dẫn trong file
 
 
 
