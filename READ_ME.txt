@@ -23,24 +23,29 @@ MÔ TẢ:
 
 YÊU CẦU:
     1. Đăng kí API gg calendar trên Google Cloud Console và file credentials.json sau khi đăng kí xong
-    2. Trình biên soạn python như VSC hoặc Spyder
-    3. Cài đặt python và pip
-    4. Thêm path vào environment
+    2. Trình biên soạn python như VSCode (có cài extension python, python environment) hoặc Spyder
+    3. Cài đặt python và pip: https://www.python.org/downloads/
+    4. Thêm path python vào environment
 
 
 CÁC BƯỚC THỰC HIỆN CÀI ĐẶT:
-    1. Tạo project Google Cloud như hướng dẫn trong 2 ảnh API_ggCloud (dùng mail mà bạn muốn import lịch), sau đó lưu file credentials.json vào cùng thư mục tool này
-    2. Copy đoạn code sau vào terminal VSC để tải thư viện python:
+    1. Tải zip và giải nén thư mục vào vị trí mong muốn
+    2. Tạo project Google Cloud như hướng dẫn trong 2 ảnh API_ggCloud (dùng mail mà bạn muốn import lịch), sau đó lưu file credentials.json vào cùng thư mục tool này
+    3. Mở VSC, open folder -> thư mục đã giải nén -> select folder. New Terminal
+    4. Phím window -> search Edit system environment variables -> Environment variables 
+        Ở user variables tìm dòng Path -> edit -> new. Paste đường dẫn vào python: C:\Users\TIEN ANH\AppData\Local\Programs\Python\
+        Vào terminal VSC chạy lệnh   pip --version   để check thử
+    Copy đoạn code sau vào terminal VSC để tải thư viện python:
         Nếu máy chạy linux/mac thì thêm đoạn sau, window thì bỏ qua:
                 python3 -m venv .venv
                 source .venv/bin/activate
         Window:
-        py -m ensurepip --upgrade
-        py -m pip install playwright beautifulsoup4 nest-asyncio google-api-python-client google-auth-httplib2 google-auth-oauthlib pycryptodome
+        pip install playwright beautifulsoup4 nest-asyncio google-api-python-client google-auth-httplib2 google-auth-oauthlib pycryptodome
         playwright install chromium
 
     3. Chạy file login_once.py để lấy dữ liệu phiên đăng nhập erp cho 2 file còn lại. Sau khi đăng nhập hãy vào thời khóa biểu -> lịch tuần, cửa sổ sẽ tự đóng sau đó
-    4. Lần đầu có thể chạy file sync.py nếu muốn thay đổi số tuần muốn đồng bộ và lịch muốn đồng bộ
+    4. Lần đầu chạy file sync.py để chọn số tuần muốn đồng bộ và lịch muốn đồng bộ
+    5. Cài đặt cho file sync_auto.py chạy tự động hằng ngày: sẽ cập nhật ở phiên bản sau
 
 
 
