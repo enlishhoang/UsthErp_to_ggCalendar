@@ -23,13 +23,13 @@ echo ""
 echo "[2/2] Dang tai va cai dat thu vien..."
 # Dùng || để fallback: Nếu pip bản cũ không hiểu cờ break-system-packages thì chạy lệnh pip bình thường
 python3 -m pip install --upgrade pip --break-system-packages 2>/dev/null || python3 -m pip install --upgrade pip
-python3 -m pip install -r requirements.txt --break-system-packages 2>/dev/null || python3 -m pip install -r requirements.txt
+python3 -m pip install -r V4requirements.txt --break-system-packages 2>/dev/null || python3 -m pip install -r V4requirements.txt
 
 
 echo ""
 echo "========================================================"
 echo "CAI DAT HOAN TAT!"
-echo "Bay gio ban co the chay tool bang lenh: python3 sync_auto.py"
+echo "Bay gio ban co the chay tool bang lenh: python3 app.py"
 echo "========================================================"
 echo ""
 read -p "Nhan Enter de dong cua so nay..."
