@@ -1,0 +1,7 @@
+V4/credentials.json
+V4/erp_session.json
+V4/token.json
+V4/__pycache__/erp_client.cpython-313.pyc
+V4/__pycache__/gcal_manager.cpython-313.pyc
+/V4/__pycache__
+/V3/__pycache__
