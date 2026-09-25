@@ -17,6 +17,8 @@ Hoàn thành bản 3.0 chiều 24/09/2026 trên lớp công nghệ sinh học y 
             mặc định sync 2 tuần vào lịch cá nhân mặc định
             điểm trừ là dựa vào tiết nên có thể lệch giờ thi
         sync.py chạy thủ công vì sẽ hỏi thêm thông tin nhưng chính xác kiện 100% về thời gian sự kiện
+Hoàn thành bản 4.0 sáng 25/09/2006
+Hoàn thành bản 5.0 1 rưỡi sáng 
     
 Để tối ưu thì mỗi ngành chỉ cần 1 người cài đặt, sau đó tạo lịch chung add mọi người vào rồi chạy code up lên lịch đó là mọi người có thể xem chung
 Hạn chế: có thể gây nhầm lẫn lịch thực hành khi 1 lớp chia ra nhiều nhóm có lịch khác nhau
