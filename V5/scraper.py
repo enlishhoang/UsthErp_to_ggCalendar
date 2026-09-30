@@ -37,7 +37,7 @@ async def fetch_weeks_html(weeks: int = 1, headless: bool = True,
     """
     htmls = []
     async with async_playwright() as p:
-        context = await p.chromium.launch_persistent_context(PROFILE_DIR, headless=False)
+        context = await p.chromium.launch_persistent_context(PROFILE_DIR, headless=headless)
         page = context.pages[0] if context.pages else await context.new_page()
 
         print("Đang truy cập ERP để lấy lịch...")

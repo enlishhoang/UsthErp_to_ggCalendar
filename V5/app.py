@@ -5,8 +5,10 @@ import logging
 import os
 import subprocess
 import sys
+import queue
 import threading
 import webbrowser
+import time 
 from datetime import datetime, timedelta
 
 from flask import Flask, abort, jsonify, request
@@ -24,6 +26,7 @@ except ImportError:
 PORT = int(os.environ.get("PORT", "5077"))
 app = Flask(__name__)
 sync_lock = threading.Lock()
+last_ping_time = time.time()
 
 @app.before_request
 def guard():
@@ -69,38 +72,59 @@ class _ListHandler(logging.Handler):
     def emit(self, record):
         self.lines.append(record.getMessage())
 
+import queue # Thêm vào đầu file
+import threading
+
 @app.post("/api/sync")
 def sync():
     d = request.get_json(silent=True) or {}
     calendar_id = str(d.get("calendar_id", "")).strip() or "primary"
+    
     if not sync_lock.acquire(blocking=False):
-        return jsonify(ok=False, error="Đang có một tiến trình khác chạy."), 409
+        return "Đang có một tiến trình khác chạy.\n", 409
     
-    handler = _ListHandler()
-    glog = logging.getLogger("usth-sync.gcal")
-    glog.setLevel(logging.INFO)
-    glog.addHandler(handler)
-    
-    try:
-        from gcal_manager import sync_to_google_calendar
-        past_w = int(d.get("past_weeks", 0))
-        future_w = int(d.get("future_weeks", 2))
-        start, end = _window(past_w, future_w)
-        
-        sessions = run_async(get_schedule_api(int(start.timestamp() * 1000), int(end.timestamp() * 1000), headless=True))
-        
-        if not sessions:
-            return jsonify(ok=False, error="Không có buổi học nào trong khoảng thời gian này.")
+    log_queue = queue.Queue()
+
+    class QueueHandler(logging.Handler):
+        def emit(self, record):
+            log_queue.put(record.getMessage() + "\n")
+
+    def run_sync():
+        glog = logging.getLogger("usth-sync.gcal")
+        handler = QueueHandler()
+        glog.addHandler(handler)
+        try:
+            from gcal_manager import sync_to_google_calendar
+            past_w = int(d.get("past_weeks", 0))
+            future_w = int(d.get("future_weeks", 2))
+            start, end = _window(past_w, future_w)
             
-        sync_to_google_calendar(sessions, start.isoformat(), end.isoformat(), calendar_id=calendar_id)
-        return jsonify(ok=True, count=len(sessions), log=handler.lines)
-    except SessionExpiredError:
-        return jsonify(ok=False, error="Phiên đăng nhập hết hạn. Hãy nhấn nút Đăng nhập lại."), 401
-    except Exception as e:
-        return jsonify(ok=False, error=f"Lỗi hệ thống: {e}"), 502
-    finally:
-        glog.removeHandler(handler)
-        sync_lock.release()
+            sessions = run_async(get_schedule_api(int(start.timestamp() * 1000), int(end.timestamp() * 1000), headless=True))
+            
+            if not sessions:
+                log_queue.put("Không có buổi học nào trong khoảng thời gian này.\n")
+            else:
+                sync_to_google_calendar(sessions, start.isoformat(), end.isoformat(), calendar_id=calendar_id)
+        except SessionExpiredError:
+            log_queue.put("LỖI: Phiên đăng nhập hết hạn. Hãy đăng nhập lại.\n")
+        except Exception as e:
+            log_queue.put(f"LỖI HỆ THỐNG: {e}\n")
+        finally:
+            glog.removeHandler(handler)
+            sync_lock.release()
+            log_queue.put(None) # Tín hiệu kết thúc stream
+
+    # Chạy tiến trình đồng bộ ở một luồng (thread) riêng để không chặn response
+    threading.Thread(target=run_sync).start()
+
+    def stream():
+        while True:
+            msg = log_queue.get()
+            if msg is None:
+                break
+            yield msg
+
+    return app.response_class(stream(), mimetype='text/plain')
 
 @app.post("/api/sync_html")
 def sync_html():
@@ -135,6 +159,24 @@ def sync_html():
     finally:
         glog.removeHandler(handler)
         sync_lock.release()
+
+@app.post("/api/ping")
+def ping():
+    global last_ping_time
+    last_ping_time = time.time()
+    return jsonify(ok=True)
+
+def watch_browser():
+    global last_ping_time
+    while True:
+        time.sleep(5)
+        # Nếu quá 10 giây không thấy trình duyệt báo cáo -> Tắt app giải phóng port
+        if time.time() - last_ping_time > 10:
+            print("Trình duyệt đã đóng, tự động tắt ứng dụng...")
+            os._exit(0) 
+
+# Bật luồng chạy ngầm để liên tục kiểm tra
+threading.Thread(target=watch_browser, daemon=True).start()
 
 PAGE = r"""<!doctype html>
 <html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -186,6 +228,10 @@ small{color:var(--muted);display:block;margin-top:.5rem}
 
 <script>
 window.onload = function() {
+// Cứ mỗi 5 giây báo cho Python biết là tab này vẫn đang mở
+    setInterval(() => {
+        fetch('/api/ping', { method: 'POST' }).catch(() => {});
+    }, 5000);
     function getEl(id) { return document.getElementById(id); }
     
     async function api(path, bodyData) {
@@ -249,14 +295,36 @@ window.onload = function() {
     });
 
     getEl('bs').onclick = () => runAction('bs', 'm2', async () => {
-        getEl('out').innerHTML = '';
-        const r = await api('/api/sync', getOpts());
-        if (!r.ok) return setMsg('m2', r.error, 'err');
-        setMsg('m2', 'API: Đã đồng bộ ' + r.count + ' buổi học.', 'ok');
+        getEl('out').innerHTML = '<pre id="log_pre"></pre>';
+        const pre = getEl('log_pre');
         
-        const p = document.createElement('pre');
-        p.textContent = (r.log || []).join('\n');
-        getEl('out').appendChild(p);
+        try {
+            const res = await fetch('/api/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(getOpts())
+            });
+            
+            if (res.status === 409) {
+                setMsg('m2', await res.text(), 'err');
+                return;
+            }
+
+            // Đọc stream từng dòng log bắn về
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+                pre.textContent += decoder.decode(value);
+                // Tự động cuộn xuống dưới cùng
+                pre.scrollTop = pre.scrollHeight; 
+            }
+            setMsg('m2', 'Hoàn tất.', 'ok');
+        } catch(e) {
+            setMsg('m2', 'Lỗi: ' + e.message, 'err');
+        }
     });
 
     getEl('bh').onclick = () => runAction('bh', 'm2', async () => {
