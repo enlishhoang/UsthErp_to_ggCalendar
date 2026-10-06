@@ -85,5 +85,5 @@ async def get_schedule(from_time_ms: int, to_time_ms: int, headless: bool = True
             raise SessionExpiredError(f"Không có 'payload' trong response: {str(raw_response)[:300]}")
             
         timetable_data = decrypt_payload(raw_response["payload"])
-
+        
         return extract_sessions(timetable_data, from_time_ms, to_time_ms)

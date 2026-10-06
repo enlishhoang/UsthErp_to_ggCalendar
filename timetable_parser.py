@@ -47,6 +47,14 @@ def _parse_weeks(cal: dict) -> list[int]:
 def _ms_to_date(ms):
     return datetime.fromtimestamp(ms / 1000, VN).date()
 
+def _teacher_names(*objs) -> str:
+    names = []
+    for o in objs:
+        for t in o.get("_teachers") or []:
+            n = t.get("fullName") if isinstance(t, dict) else None
+            if n and n not in names:
+                names.append(n)
+    return ", ".join(names)
 
 def extract_sessions(payload, from_ms: int, to_ms: int) -> list[dict]:
     if isinstance(payload, dict):
@@ -70,7 +78,7 @@ def extract_sessions(payload, from_ms: int, to_ms: int) -> list[dict]:
             name = (course.get("courseName") or course.get("name")
                     or cal.get("courseName") or cal.get("name") or "Chưa rõ môn")
             teachers = cal.get("teacherNames") or []
-            teacher = ", ".join(teachers) if teachers else (course.get("teacherName") or cal.get("teacherName") or "")
+            teacher = _teacher_names(course, cal)
             subject = f"{name} ({teacher})" if teacher else name
             room = cal.get("place") or "Chưa rõ phòng"
 
