@@ -1,0 +1,45 @@
+Tool python lấy lịch ERP tải lên GG Calendar
+By Enlish Hoàng and Gemini Pro and Claude :>> vibe code hết mấy buổi chiều
+
+YÊU CẦU:
+    1. Đăng kí API gg calendar trên Google Cloud Console và file credentials.json sau khi đăng kí xong
+    2. Trình biên soạn python như VSCode (có cài extension python, python environment) hoặc Spyder
+    3. Đẫ cài đặt python
+    4. Thêm path python vào environment đối với Window
+
+CÀI ĐẶT CHUNG:
+    1. Tải zip (Code -> Download as Zip) và giải nén thư mục vào vị trí mong muốn
+    2. Tạo project Google Cloud như hướng dẫn trong 2 ảnh API_ggCloud (dùng mail mà bạn muốn import lịch), sau đó lưu file credentials.json vào cùng thư mục tool này
+    3. Tải python 3.13 từ trang https://www.python.org/downloads/
+    
+VỚI WINDOW:
+    1. Thử chạy file start_app_win.bat, nếu cài đặt thành công và không gặp lỗi gì, xin chúc mừng :)))
+    2. Nếu có lỗi, thử kiểm tra và sửa bằng các cách sau:
+        2.1 
+    3. Mở VSC, open folder -> thư mục đã giải nén -> select folder. New Terminal
+    4. Phím window -> search Edit system environment variables -> Environment variables 
+        Ở user variables tìm dòng Path -> edit -> new. Paste đường dẫn vào python: C:\Users\TIEN ANH\AppData\Local\Programs\Python\
+        Vào terminal VSC chạy lệnh   pip --version   để check thử
+
+VỚI MAC:
+    1. Cấp quyền cho file start_app_mac.command bằng cách:
+        Mở Terminal bằng cách: Cmd + Space -> gõ terminal -> Enter 
+        Gõ "chmod +x " và để đó (cái bên trong dấu ngoặc kép th nhá :)) 
+        Kéo thả file .command vào terminal để nó tự dán đường dẫn đến file 
+        Nhấn Enter và tắt terminal 
+    2. Nhấn đúp vào start_app_mac.command để bắt đầu tải thư viện và chạy app 
+    3. 
+    
+VỚI LINUX: (tạm thời)
+    1. Mở VSC tương tự như window, cài extension bat runner hoặc shell runner hoặc command runner 
+    2. Chuyển đến file start_app có đuôi tương ứng và bấm chạy trong VSC 
+    3. Nếu chạy thành công, xin chúc mừng :)))   
+    
+    
+GỠ CÀI ĐẶT:
+    1. Chạy file uninstall.bat với Window, uninstall.sh trong linux, chưa có file cho mac 
+    2. Xóa thư mục tool này đi 
+
+
+
+
