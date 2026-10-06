@@ -1,31 +1,31 @@
 @echo off
 chcp 65001 >nul
-title Khởi động Đồng bộ TKB USTH
+title Khoi đong dong bo TKB USTH
 
 :: Đảm bảo script luôn chạy từ thư mục chứa file .bat
 cd /d "%~dp0"
 
 :: Kiểm tra và tạo môi trường ảo (venv) nếu chưa có
-if not exist "venv\Scripts\activate.bat" (
-    echo Đang tạo môi trường ảo (venv)...
-    python -m venv venv
+if not exist ".venv\Scripts\activate.bat" (
+    echo Dang tao moi truong ao 
+    python -m venv .venv
     if errorlevel 1 (
-        echo [Lỗi] Không thể tạo môi trường ảo. Hãy kiểm tra xem máy đã cài Python và tích chọn "Add Python to PATH" chưa.
+        echo [Lỗi] Khong the tao moi truong ao. Hay kiem tra xem may da cai Python va tich chon "Add Python to PATH" chua.
         pause
         exit /b 1
     )
 )
 
 :: Kích hoạt môi trường ảo
-call venv\Scripts\activate.bat
+call .venv\Scripts\activate.bat
 
-echo Đang cài đặt các thư viện Python...
+echo Đang cai đat cac thu vien Python
 pip install -r requirements.txt
 
 echo.
 echo ===================================================
-echo Đang tải trình duyệt Chromium cho Playwright...
-echo (Nếu báo lỗi "timed out", hãy đóng và chạy lại file này)
+echo Dang tai trinh duyet Chromium cho Playwright
+echo Neu bao loi "timed out", hay đong va chay lai file nay
 echo ===================================================
 :: Bắt Playwright cài đặt cục bộ vào thư mục hiện tại để né lỗi khoảng trắng đường dẫn
 set PLAYWRIGHT_BROWSERS_PATH=0
@@ -33,7 +33,7 @@ playwright install chromium
 
 echo.
 echo ===================================================
-echo Đang khởi động Web App (Bảng điều khiển)...
+echo Dang khoi đong Bang dieu khien
 echo ===================================================
 python app.py
 

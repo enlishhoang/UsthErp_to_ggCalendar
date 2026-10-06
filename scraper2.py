@@ -43,7 +43,7 @@ def generate_checksum(payload_dict: dict) -> str:
 
 async def get_schedule(from_time_ms: int, to_time_ms: int, headless: bool = True) -> list[dict]:
     async with async_playwright() as p:
-        context = await p.chromium.launch_persistent_context(PROFILE_DIR, headless=False)
+        context = await p.chromium.launch_persistent_context(PROFILE_DIR, headless=headless)
         
         # 1. Lấy thông tin kỳ học hiện tại
         sem_resp = await context.request.get("https://erp.usth.edu.vn/student-services/api/v1/semesters/current")
