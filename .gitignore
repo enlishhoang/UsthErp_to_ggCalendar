@@ -1,2 +1,6 @@
 /Versions
-
+/chrome_profile
+credentials.json
+token.json
+/.venv
+/__pycache__
