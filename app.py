@@ -3,15 +3,13 @@
 import asyncio
 import logging
 import os
-import subprocess
-import sys
 import queue
 import threading
+import time
 import webbrowser
-import time 
 from datetime import datetime, timedelta
 
-from flask import Flask, abort, jsonify, request
+from flask import Flask, Response, abort, jsonify, request
 
 from login_once import manual_login_and_save
 from scraper2 import get_schedule as get_schedule_api, SessionExpiredError, PROFILE_DIR
@@ -24,10 +22,72 @@ except ImportError:
     HAS_HTML_SCRAPER = False
 
 PORT = int(os.environ.get("PORT", "5077"))
+SHUTDOWN_GRACE = 5      # giây chờ sau khi tab đóng (để F5 / reload không làm tắt app)
+STARTUP_GRACE = 60      # giây chờ tab đầu tiên kết nối, nếu không có thì tự tắt
+
 app = Flask(__name__)
 sync_lock = threading.Lock()
-last_ping_time = time.time()
 
+# ---------------------------------------------------------------------------
+# Phát hiện tab đóng bằng kết nối SSE (/api/alive)
+# ---------------------------------------------------------------------------
+_state_lock = threading.Lock()
+_streams = 0            # số tab đang giữ kết nối /api/alive
+_exit_timer = None
+
+
+def _schedule_exit_check(delay):
+    """Hẹn giờ kiểm tra xem có nên tắt app không (huỷ hẹn giờ cũ nếu có)."""
+    global _exit_timer
+    with _state_lock:
+        if _exit_timer:
+            _exit_timer.cancel()
+        _exit_timer = threading.Timer(delay, _maybe_exit)
+        _exit_timer.daemon = True
+        _exit_timer.start()
+
+
+def _maybe_exit():
+    with _state_lock:
+        if _streams > 0:
+            return                      # có tab kết nối lại rồi, không tắt
+    if sync_lock.locked():              # đang đồng bộ -> không tắt giữa chừng
+        _schedule_exit_check(SHUTDOWN_GRACE)
+        return
+    print("Trình duyệt đã đóng, tự động tắt ứng dụng...")
+    os._exit(0)
+
+
+@app.get("/api/alive")
+def alive():
+    global _streams, _exit_timer
+
+    def gen():
+        global _streams
+        try:
+            while True:
+                yield ": keepalive\n\n"
+                time.sleep(2)           # ghi thất bại = trình duyệt đã ngắt kết nối
+        finally:
+            with _state_lock:
+                _streams -= 1
+                remaining = _streams
+            if remaining == 0:
+                _schedule_exit_check(SHUTDOWN_GRACE)
+
+    with _state_lock:
+        _streams += 1
+        if _exit_timer:                 # tab (mới) đã kết nối -> huỷ lệnh tắt
+            _exit_timer.cancel()
+            _exit_timer = None
+
+    resp = Response(gen(), mimetype="text/event-stream")
+    resp.headers["Cache-Control"] = "no-cache"
+    resp.headers["X-Accel-Buffering"] = "no"
+    return resp
+
+
+# ---------------------------------------------------------------------------
 @app.before_request
 def guard():
     if request.host.split(":")[0] not in ("127.0.0.1", "localhost"):
@@ -35,25 +95,30 @@ def guard():
     if request.method == "POST" and not request.is_json:
         abort(415)
 
+
 def _window(past: int, future: int):
     from timetable_parser import VN
     now = datetime.now(VN)
     monday = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
     return monday - timedelta(weeks=past), monday + timedelta(weeks=future + 1)
 
+
 def run_async(coro):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     return loop.run_until_complete(coro)
 
+
 @app.get("/")
 def index():
     return PAGE
+
 
 @app.get("/api/status")
 def status():
     logged_in = os.path.exists(PROFILE_DIR) and len(os.listdir(PROFILE_DIR)) > 0
     return jsonify(logged_in=logged_in)
+
 
 @app.post("/api/login")
 def login():
@@ -65,24 +130,24 @@ def login():
     except Exception as e:
         return jsonify(ok=False, error=f"Lỗi khởi chạy trình duyệt: {e}"), 502
 
+
 class _ListHandler(logging.Handler):
     def __init__(self):
         super().__init__()
         self.lines = []
+
     def emit(self, record):
         self.lines.append(record.getMessage())
 
-import queue # Thêm vào đầu file
-import threading
 
 @app.post("/api/sync")
 def sync():
     d = request.get_json(silent=True) or {}
     calendar_id = str(d.get("calendar_id", "")).strip() or "primary"
-    
+
     if not sync_lock.acquire(blocking=False):
         return "Đang có một tiến trình khác chạy.\n", 409
-    
+
     log_queue = queue.Queue()
 
     class QueueHandler(logging.Handler):
@@ -91,6 +156,7 @@ def sync():
 
     def run_sync():
         glog = logging.getLogger("usth-sync.gcal")
+        glog.setLevel(logging.INFO)
         handler = QueueHandler()
         glog.addHandler(handler)
         try:
@@ -98,9 +164,9 @@ def sync():
             past_w = int(d.get("past_weeks", 0))
             future_w = int(d.get("future_weeks", 2))
             start, end = _window(past_w, future_w)
-            
+
             sessions = run_async(get_schedule_api(int(start.timestamp() * 1000), int(end.timestamp() * 1000), headless=True))
-            
+
             if not sessions:
                 log_queue.put("Không có buổi học nào trong khoảng thời gian này.\n")
             else:
@@ -112,7 +178,7 @@ def sync():
         finally:
             glog.removeHandler(handler)
             sync_lock.release()
-            log_queue.put(None) # Tín hiệu kết thúc stream
+            log_queue.put(None)  # Tín hiệu kết thúc stream
 
     # Chạy tiến trình đồng bộ ở một luồng (thread) riêng để không chặn response
     threading.Thread(target=run_sync).start()
@@ -126,31 +192,32 @@ def sync():
 
     return app.response_class(stream(), mimetype='text/plain')
 
+
 @app.post("/api/sync_html")
 def sync_html():
     if not HAS_HTML_SCRAPER:
         return jsonify(ok=False, error="File scraper.py không tồn tại hoặc bị lỗi.")
-        
+
     d = request.get_json(silent=True) or {}
     calendar_id = str(d.get("calendar_id", "")).strip() or "primary"
     if not sync_lock.acquire(blocking=False):
         return jsonify(ok=False, error="Đang có một tiến trình khác chạy."), 409
-    
+
     handler = _ListHandler()
     glog = logging.getLogger("usth-sync.gcal")
     glog.setLevel(logging.INFO)
     glog.addHandler(handler)
-    
+
     try:
         from gcal_manager import sync_to_google_calendar
         past_w = int(d.get("past_weeks", 0))
         future_w = int(d.get("future_weeks", 2))
-        
+
         sessions = run_async(get_schedule_html(past_weeks=past_w, weeks=future_w + 1, headless=True))
-        
+
         if not sessions:
             return jsonify(ok=False, error="Không cào được qua giao diện HTML.")
-        
+
         start, end = _window(past_w, future_w)
         sync_to_google_calendar(sessions, start.isoformat(), end.isoformat(), calendar_id=calendar_id)
         return jsonify(ok=True, count=len(sessions), log=handler.lines)
@@ -160,23 +227,6 @@ def sync_html():
         glog.removeHandler(handler)
         sync_lock.release()
 
-@app.post("/api/ping")
-def ping():
-    global last_ping_time
-    last_ping_time = time.time()
-    return jsonify(ok=True)
-
-def watch_browser():
-    global last_ping_time
-    while True:
-        time.sleep(5)
-        # Nếu quá 10 giây không thấy trình duyệt báo cáo -> Tắt app giải phóng port
-        if time.time() - last_ping_time > 10:
-            print("Trình duyệt đã đóng, tự động tắt ứng dụng...")
-            os._exit(0) 
-
-# Bật luồng chạy ngầm để liên tục kiểm tra
-threading.Thread(target=watch_browser, daemon=True).start()
 
 PAGE = r"""<!doctype html>
 <html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -227,11 +277,12 @@ small{color:var(--muted);display:block;margin-top:.5rem}
 </section>
 
 <script>
+// Giữ một kết nối SSE mở suốt thời gian tab còn sống.
+// Tab đóng -> trình duyệt ngắt kết nối -> Python tự tắt sau vài giây.
+// EventSource tự kết nối lại khi reload trang, nên không cần ping thủ công.
+window.aliveSource = new EventSource('/api/alive');
+
 window.onload = function() {
-// Cứ mỗi 5 giây báo cho Python biết là tab này vẫn đang mở
-    setInterval(() => {
-        fetch('/api/ping', { method: 'POST' }).catch(() => {});
-    }, 5000);
     function getEl(id) { return document.getElementById(id); }
     
     async function api(path, bodyData) {
@@ -344,5 +395,8 @@ window.onload = function() {
 </script></body></html>"""
 
 if __name__ == "__main__":
+    # Nếu không có tab nào kết nối trong STARTUP_GRACE giây (mở trình duyệt thất bại), tự tắt
+    _schedule_exit_check(STARTUP_GRACE)
     threading.Timer(1.0, lambda: webbrowser.open(f"http://127.0.0.1:{PORT}")).start()
-    app.run(host="127.0.0.1", port=PORT, debug=False)
+    # threaded=True là bắt buộc: mỗi tab giữ 1 kết nối SSE mở liên tục
+    app.run(host="127.0.0.1", port=PORT, debug=False, threaded=True)

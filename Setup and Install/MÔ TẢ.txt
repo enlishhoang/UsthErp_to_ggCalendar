@@ -29,8 +29,8 @@ MÔ TẢ:
             Có giao diện app của V4 và được cải tiến để dễ sử dụng hơn 
             Tạo các file cài đặt lần đầu và chạy cho window, mac và linux (đã test thành công trên window và mac)
         Bản 5.1 (30/9/26): Sửa các lỗi hiện tiến trình và hiện trình duyệt ngầm, làm lại file cài đặt cho window
-        Bản 5.2: Thay đổi cấu trúc thư mục. 
-        Bản 5.3: Sẽ thêm file cài đặt chạy tự động, Viet lai huong dan cai dat cho cac may 
+        Bản 5.2 (6/10/26): Thay đổi cấu trúc thư mục, thêm file cài đặt chạy tự động
+        Bản 5.3: Sẽ viết lại hướng dẫn cài đặt cho cac may 
         
     Để tối ưu thì mỗi ngành chỉ cần 1 người cài đặt và chạy app, sau đó tạo lịch chung add mọi người vào rồi chạy code up lên lịch đó là mọi người có thể xem chung
     Hạn chế: có thể gây nhầm lẫn lịch thực hành khi 1 lớp chia ra nhiều nhóm có lịch khác nhau
