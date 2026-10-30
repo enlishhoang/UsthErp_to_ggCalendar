@@ -4,4 +4,4 @@ credentials.json
 token.json
 /.venv
 /__pycache__
-/Setup and Install
+.gitignore
