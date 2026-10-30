@@ -1,0 +1,10 @@
+flask
+requests
+pycryptodome
+tzdata            # bắt buộc trên Windows cho zoneinfo
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+nest-asyncio 
+playwright 
+beautifulsoup4

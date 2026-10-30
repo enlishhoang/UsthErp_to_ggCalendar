@@ -5,3 +5,7 @@ token.json
 /.venv
 /__pycache__
 /Setup and Install
+/V5/__pycache__
+/V5/chrome_profile
+V5/.last_auto_sync
+V5/autosync.log
