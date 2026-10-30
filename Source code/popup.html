@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8">
+<style>
+:root{--bg:#fff;--fg:#1c1e21;--muted:#65676b;--card:#f5f6f7;--line:#dddfe2;--accent:#1a73e8;--err:#c5221f;--ok:#188038;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--bg:#18191a;--fg:#e4e6eb;--muted:#a8abb0;--card:#242526;--line:#3a3b3c;--accent:#8ab4f8;--err:#f28b82;--ok:#81c995}}
+body{font:13px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--fg);width:340px;margin:0;padding:12px}
+h1{font-size:15px;margin:0 0 8px}
+details{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:8px 0}
+summary{cursor:pointer;font-weight:600}
+label{display:block;margin:8px 0 2px;color:var(--muted);font-size:12px}
+input[type=text],input[type=number]{width:100%;box-sizing:border-box;padding:5px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg);color:var(--fg);font:inherit}
+.row{display:flex;gap:8px}.row>div{flex:1}
+.chk{display:flex;align-items:center;gap:6px;margin-top:8px}.chk label{margin:0;color:var(--fg)}
+button{padding:7px 12px;border:0;border-radius:6px;background:var(--accent);color:#fff;font:inherit;cursor:pointer}
+button:disabled{opacity:.5;cursor:wait}
+#sync{width:100%;margin-top:8px}
+#st{margin-top:8px;font-weight:600;min-height:1.2em}.ok{color:var(--ok)}.err{color:var(--err)}
+pre{white-space:pre-wrap;color:var(--muted);font-size:11.5px;background:var(--card);padding:8px;border-radius:6px;max-height:160px;overflow:auto;margin:6px 0 0}
+small{color:var(--muted)}
+</style></head><body>
+<h1>USTH ERP → Google Calendar</h1>
+
+<div class="row">
+  <div><label>Số tuần cũ</label><input id="past" type="number" min="0" max="26"></div>
+  <div><label>Số tuần tới</label><input id="future" type="number" min="0" max="26"></div>
+</div>
+<label>ID Calendar (để trống = lịch chính)</label>
+<input id="cal" type="text" placeholder="abc@group.calendar.google.com" autocomplete="off">
+
+<button id="sync">Đồng bộ ngay</button>
+<div id="st"></div>
+<pre id="log" hidden></pre>
+<small id="last"></small>
+
+<details>
+  <summary>Cài đặt nâng cao &amp; tự động chạy</summary>
+  <label>Client ID riêng (tùy chọn, để trống nếu đã được cấp sẵn)</label>
+  <input id="cid" type="text" autocomplete="off" placeholder="xxxx.apps.googleusercontent.com">
+  <label>Redirect URI (chỉ người phát triển cần khai báo trong Google Cloud)</label>
+  <input id="redir" type="text" readonly>
+  <div class="chk"><input id="auto" type="checkbox"><label for="auto">Tự đồng bộ khi mở trình duyệt, mỗi</label>
+    <input id="days" type="number" min="1" max="30" style="width:52px"> <label>ngày</label></div>
+</details>
+
+<script src="popup.js"></script>
+</body></html>

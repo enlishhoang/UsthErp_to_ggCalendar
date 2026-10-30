@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "USTH ERP → Google Calendar",
+  "version": "6.1.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvJUyO1wvmSglXGr12+fwr/XHPJojXt654jWLIWRODSqbQRfAYyr7/etYasr3oDtkdUXuaIxdLk9aXpdPmwMM/YWmCkSBwIlZ/VDnNPl2WB8cohMpJod3j+ZveF5pfMe6nDP9sOBVmP82/et1+aixzgqLaH8dkx6a8gvOJsSN/1owAKv3X/GTzV4+VIQpguDsZIxgYD5/LQynfCgOuHJuZlBu0uI3TrD/FXsFX8NQ904BvLZyUk9wvIkB4j+sZnJSmjxZwRKPMw76ZQYJNnHeqAaFoWysFF9tH+cNlyXedwrdLpj88bl9N/TZglz9N3pNbvYPBJwgftRGqFi4C4kPRwIDAQAB",
+  "description": "Đồng bộ thời khóa biểu USTH ERP sang Google Calendar.",
+  "icons": {
+    "48": "ErpGd-48.png"
+  },
+  "permissions": ["storage", "identity", "declarativeNetRequest"],
+  "host_permissions": [
+    "https://erp.usth.edu.vn/*",
+    "https://www.googleapis.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "action": {
+    "default_title": "USTH ERP → Google Calendar",
+    "default_popup": "popup.html"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "usth-erp-gcal@local",
+      "strict_min_version": "128.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  }
+}
